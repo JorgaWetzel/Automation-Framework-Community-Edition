@@ -19,6 +19,8 @@ $NTXDrivers = "C:\Program Files\Nutanix\VirtIO"
 
 CD $Source
 
+&
+
 # Speed up the download - disable progress bar
 $ProgressPreference = 'SilentlyContinue'
 
@@ -206,35 +208,44 @@ new-item -path "DS001:\Applications" -enable "True" -Name "Parallels" -Comments 
 new-item -path "DS001:\Applications" -enable "True" -Name "Scripts" -Comments "" -ItemType "folder" -Verbose
 new-item -path "DS001:\Applications" -enable "True" -Name "VMware" -Comments "" -ItemType "folder" -Verbose
 
+$user = 'oneict'
+$pass = 'ca228ffca20d54e486aa7d16a2881caa'
+$pair = "$($user):$($pass)"
+$encodedCreds = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($pair))
+$basicAuthValue = "Basic $encodedCreds"
+$Headers = @{
+    Authorization = $basicAuthValue
+}
+
 Write-Verbose "Downloading Applications" -Verbose
 $uri = "https://chocoserver:8443/repository/oneict/Applications.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
-Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
-Expand-Archive -Path $PackageName -DestinationPath .
+Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName" -Headers $Headers
+Expand-Archive -Force -Path $PackageName -DestinationPath .
 Remove-Item $Target\Applications
 Move-Item -Path $Source\Applications\ -Destination $Target -Force
 
 $uri = "https://chocoserver:8443/repository/oneict/Control.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
-Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
+Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName" -Headers $Headers
 Expand-Archive -Path $PackageName -DestinationPath .
 cmd /C "xcopy $Source\Control $Target\Control /E /Y /S /Q"
 
 $uri = "https://chocoserver:8443/repository/oneict/OEM.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
-Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
+Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName" -Headers $Headers
 Expand-Archive -Path $PackageName -DestinationPath .
-cmd /C "xcopy $Source\Control $Target\$OEM$ /E /Y /S /Q"
+Move-Item -Path $Source\"`$OEM`$\"\ -Destination $Target -Force
 
 $uri = "https://chocoserver:8443/repository/oneict/Tools.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
-Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
+Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName" -Headers $Headers
 Expand-Archive -Path $PackageName -DestinationPath .
-cmd /C "xcopy $Source\Control $Target\Tools /E /Y /S /Q"
+cmd /C "xcopy $Source\Tools $Target\Tools /E /Y /S /Q"
 
 $uri = "https://chocoserver:8443/repository/oneict/Scripts.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
-Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
+Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName" -Headers $Headers
 Expand-Archive -Path $PackageName -DestinationPath .
 cmd /C "xcopy $Source\Scripts $Target\Scripts /E /Y /S /Q"
 
@@ -243,7 +254,7 @@ new-item -path "DS001:\Selection Profiles" -enable "True" -Name "WinPE 5.0 x64" 
 
 $uri = "https://chocoserver:8443/repository/oneict/Drivers.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
-Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
+Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName" -Headers $Headers
 Expand-Archive -Path $PackageName -DestinationPath .\
 
 if( (Test-Path -Path $VMWDrivers ) )
@@ -263,7 +274,7 @@ if( (Test-Path -Path $NTXDrivers ) )
 
 $uri = "https://chocoserver:8443/repository/oneict/Templates.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
-Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
+Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName" -Headers $Headers
 Expand-Archive -Path $PackageName -DestinationPath .\ -Force
 copy-item $Source\Templates\* "C:\Program Files\Microsoft Deployment Toolkit\Templates" -Force
 copy-item $Source\Samples\* "C:\Program Files\Microsoft Deployment Toolkit\Samples" -Force

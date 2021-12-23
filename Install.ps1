@@ -19,8 +19,6 @@ $NTXDrivers = "C:\Program Files\Nutanix\VirtIO"
 
 CD $Source
 
-&
-
 # Speed up the download - disable progress bar
 $ProgressPreference = 'SilentlyContinue'
 

@@ -10,6 +10,8 @@ $LogsShare = "Logs$"
 $Share  = "Hydration$"
 $Drive = "D:"
 $WIM = "$Drive" + "\Sources\install.wim"
+$Drive2 = "E:"
+$WIM2 = "$Drive2" + "\Sources\install.wim"
 
 $VMWDrivers = "C:\Program Files\Common Files\VMware\Drivers"
 $XENDrivers = "C:\Program Files\Citrix\XenTools\Drivers"
@@ -164,6 +166,8 @@ New-PSDrive -Name "DS001" -PSProvider "MDTProvider" -Root $Target -NetworkPath "
 Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$Drive" -DestinationFolder "Windows 2019 X64"
 $OSGUID = (Get-ItemProperty "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim").guid
 
+Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$Drive2" -DestinationFolder "Windows 11"
+
 Write-Verbose "Creating Task Sequences" -Verbose
 Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Standard" -Template "Server.xml" -Comments "" -ID "CTS-001" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
 Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Parallels RAS" -Template "Server.xml" -Comments "" -ID "CTS-002" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
@@ -183,6 +187,10 @@ Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - A
 Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Certification Authority" -Template "Server.xml" -Comments "" -ID "CTS-016" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
 import-mdttasksequence -path "DS001:\Task Sequences" -Name "Cloud - Domain Controller" -Template "StateRestore.xml" -Comments "" -ID "CTX-015" -Version "1.0" -Verbose
 import-mdttasksequence -path "DS001:\Task Sequences" -Name "Cloud - Automation Framework" -Template "StateRestore.xml" -Comments "" -ID "CTX-016" -Version "1.0" -Verbose
+import-mdttasksequence -path "DS001:\Task Sequences" -Name "Cloud - Automation Framework" -Template "StateRestore.xml" -Comments "" -ID "CTX-016" -Version "1.0" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 11 - Client Rollout" -Template "Client.xml" -Comments "Installiert Windows 11" -ID "Win11" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows 11 Pro in Windows 11 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "User State" -Template "ClientReplace.xml" -Comments "Backup USMT" -ID "USMT" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows 11 Pro in Windows 11 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+
 
 new-item -path "DS001:\Packages" -enable "True" -Name "Windows 2019 x64" -Comments "" -ItemType "folder" -Verbose
 new-item -path "DS001:\Selection Profiles" -enable "True" -Name "Windows 2019 x64" -Comments "" -Definition "<SelectionProfile><Include path=`"Packages\Windows 2019 x64`" /></SelectionProfile>" -ReadOnly "False" -Verbose
@@ -199,20 +207,32 @@ new-item -path "DS001:\Applications" -enable "True" -Name "Scripts" -Comments ""
 new-item -path "DS001:\Applications" -enable "True" -Name "VMware" -Comments "" -ItemType "folder" -Verbose
 
 Write-Verbose "Downloading Applications" -Verbose
-$uri = "http://xenapptraining.s3.amazonaws.com/Hydration/Applications.zip"
+$uri = "https://chocoserver:8443/repository/oneict/Applications.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
 Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
 Expand-Archive -Path $PackageName -DestinationPath .
 Remove-Item $Target\Applications
 Move-Item -Path $Source\Applications\ -Destination $Target -Force
 
-$uri = "http://xenapptraining.s3.amazonaws.com/Hydration/Control.zip"
+$uri = "https://chocoserver:8443/repository/oneict/Control.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
 Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
 Expand-Archive -Path $PackageName -DestinationPath .
 cmd /C "xcopy $Source\Control $Target\Control /E /Y /S /Q"
 
-$uri = "http://xenapptraining.s3.amazonaws.com/Hydration/Scripts.zip"
+$uri = "https://chocoserver:8443/repository/oneict/OEM.zip"
+$PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
+Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
+Expand-Archive -Path $PackageName -DestinationPath .
+cmd /C "xcopy $Source\Control $Target\$OEM$ /E /Y /S /Q"
+
+$uri = "https://chocoserver:8443/repository/oneict/Tools.zip"
+$PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
+Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
+Expand-Archive -Path $PackageName -DestinationPath .
+cmd /C "xcopy $Source\Control $Target\Tools /E /Y /S /Q"
+
+$uri = "https://chocoserver:8443/repository/oneict/Scripts.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
 Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
 Expand-Archive -Path $PackageName -DestinationPath .
@@ -221,7 +241,7 @@ cmd /C "xcopy $Source\Scripts $Target\Scripts /E /Y /S /Q"
 new-item -path "DS001:\Out-of-Box Drivers" -enable "True" -Name "WinPE 5.0 x64" -Comments "" -ItemType "folder" -Verbose
 new-item -path "DS001:\Selection Profiles" -enable "True" -Name "WinPE 5.0 x64" -Comments "" -Definition "<SelectionProfile><Include path=`"Out-of-Box Drivers\WinPE 5.0 x64`" /></SelectionProfile>" -ReadOnly "False" -Verbose
 
-$uri = "http://xenapptraining.s3.amazonaws.com/Hydration/Drivers.zip"
+$uri = "https://chocoserver:8443/repository/oneict/Drivers.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
 Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
 Expand-Archive -Path $PackageName -DestinationPath .\
@@ -241,7 +261,7 @@ if( (Test-Path -Path $NTXDrivers ) )
     import-mdtdriver -path "DS001:\Out-of-Box Drivers\WinPE 5.0 x64" -SourcePath "$NTXDrivers" -Verbose
 }
 
-$uri = "http://xenapptraining.s3.amazonaws.com/Hydration/Templates.zip"
+$uri = "https://chocoserver:8443/repository/oneict/Templates.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
 Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName"
 Expand-Archive -Path $PackageName -DestinationPath .\ -Force
@@ -259,10 +279,29 @@ Write-Verbose "Customizing CS and Bootstrap" -Verbose
 $ipV4 = Test-Connection -ComputerName (hostname) -Count 1  | Select-Object -ExpandProperty IPV4Address
 $ip = $ipV4.IPAddressToString
 $File = "$Target\Control\CustomSettings.ini"
+Add-Content $File "[Settings]"
+Add-Content $File "Priority=Default, Init, ByWDS,ByVirtual, ByDesktop, ByLaptop, "
+Add-Content $File "Properties=MyCustomProperty,ComputerSerialNumber, ComputerTypeName"
+Add-Content $File ""
+Add-Content $File "[ByWDS]"
+Add-Content $File "SubSection=WDS-%WDSServer%"
+Add-Content $File ""
+Add-Content $File "[ByLaptop]"
+Add-Content $File "Subsection=Laptop-%IsLaptop%"
+Add-Content $File ""
+Add-Content $File "[ByDesktop]"
+Add-Content $File "Subsection=Desktop-%IsDesktop%"
+Add-Content $File ""
+Add-Content $File "[ByVirtual]"
+Add-Content $File "Subsection=Virtual-%IsVM%"
+Add-Content $File ""
+Add-Content $File "' Computer Name"
+Add-Content $File "OSDComputerName=%ComputerTypeName%-%ComputerSerialNumber%-W10"
+Add-Content $File ""
 Add-Content $File "WindowsUpdate=False"
 Add-Content $File ""
-Add-Content $File "_SMSTSOrgName=xenappblog.com"
-Add-Content $File "_SMSTSPackageName=Automation Framework CE"
+Add-Content $File "_SMSTSOrgName=oneict.ch"
+Add-Content $File "_SMSTSPackageName=MDT Automation Framework"
 Add-Content $File "SkipRoles=YES"
 Add-Content $File "SkipSummary=YES"
 Add-Content $File "SkipBitLocker=YES"
@@ -272,6 +311,54 @@ Add-Content $File "SkipApplications=YES"
 Add-Content $File "FinishAction=REBOOT"
 Add-Content $File "EventService=http://$ip:9800"
 Add-Content $File "SLSHARE=\\$ip\logs$"
+Add-Content $File ""
+Add-Content $File "' Skip Locale Settings"
+Add-Content $File "SkipLocaleSelection=NO"
+Add-Content $File "KeyboardLocale=de-CH"
+Add-Content $File "KeyboardLocalePE=de-CH"
+Add-Content $File "KeyboardLocale=0807:00000807"
+Add-Content $File "KeyboardLocalePE=0807:00000807"
+Add-Content $File "UserLocale=de-CH"
+Add-Content $File "UILanguage=de-DE"
+Add-Content $File ""
+Add-Content $File "SkipTimeZone=YES"
+Add-Content $File "TimeZone=110"
+Add-Content $File "TimeZoneName=W. Europe Standard Time"
+Add-Content $File ""
+Add-Content $File "SkipDomainMemberShip=NO"
+Add-Content $File "'JoinDomain=aaag.local"
+Add-Content $File "'DomainAdmin=administrator"
+Add-Content $File "'DomainAdminDomain=aaag.local"
+Add-Content $File "'DomainAdminPassword=P@ssw0rd"
+Add-Content $File ""
+Add-Content $File "UserDataLocation=%UDShare%\%Hostname%"
+Add-Content $File "ScanStateArgs=/v:5 /o /c /all"
+Add-Content $File "'ScanStateArgs=/v:5 /o /c /ue:*\* /uel:90"
+Add-Content $File "LoadStateArgs=/v:5 /c /lac"
+Add-Content $File ""
+Add-Content $File "USMTMigFiles001=MigApp.xml"
+Add-Content $File "USMTMigFiles002=MigUser.xml"
+Add-Content $File "USMTMigFiles003=MigDocs.xml"
+Add-Content $File "USMTMigFiles004=ExcludeDrives_D_to_Z.xml"
+Add-Content $File "USMTMigFiles005=ExcludeSystemFolders.xml"
+Add-Content $File ""
+Add-Content $File "SkipCapture=Yes"
+Add-Content $File "'BackupLocation=NETWORK"
+Add-Content $File "'BackupShare=\\$ip\USMT\Backup"
+Add-Content $File "'BackupDir=%OSDComputerName%"
+Add-Content $File "'BackupFile=%ComputerName%.wim"
+Add-Content $File ""
+Add-Content $File "'Administrators001=AAAG\WKSADMIN"
+Add-Content $File ""
+Add-Content $File "[Laptop-True]"
+Add-Content $File "ComputerTypeName=NB"
+Add-Content $File ""
+Add-Content $File "[Desktop-True]"
+Add-Content $File "ComputerTypeName=PC"
+Add-Content $File ""
+Add-Content $File "[Virtual-True]"
+Add-Content $File "ComputerTypeName=VM"
+
 
 $default = Get-Content $File
 $default.Replace('SkipAdminPassword=NO','SkipAdminPassword=YES') | Out-File $File -Encoding ascii
@@ -285,11 +372,13 @@ Add-Content $File "[Settings]"
 Add-Content $File "Priority=Default"
 Add-Content $File ""
 Add-Content $File "[Default]"
+Add-Content $File "SkipBDDWelcome=YES"
 Add-Content $File "DeployRoot=\\$IP\$Share"
 Add-Content $File ""
 Add-Content $File "UserID=Administrator"
 Add-Content $File "UserPassword=P@ssw0rd"
 Add-Content $File "UserDomain=WORKGROUP"
+Add-Content $File "KeyboardLocalePE=0807:00000807"
 
 $xmlfile = "$Target\Control\Settings.xml"
 $xml = [xml](Get-Content $xmlfile)

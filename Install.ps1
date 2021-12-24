@@ -233,7 +233,8 @@ $uri = "https://chocoserver:8443/repository/oneict/OEM.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
 Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName" -Headers $Headers
 Expand-Archive -Path $PackageName -DestinationPath .
-Move-Item -Path $Source\"`$OEM`$\"\ -Destination $Target -Force
+Remove-Item $Target\"`$OEM`$\"
+Move-Item -Path $Source\"`$OEM`$\" -Destination $Target -Force 
 
 $uri = "https://chocoserver:8443/repository/oneict/Tools.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
@@ -327,6 +328,7 @@ Add-Content $File "KeyboardLocale=de-CH"
 Add-Content $File "KeyboardLocalePE=de-CH"
 Add-Content $File "KeyboardLocale=0807:00000807"
 Add-Content $File "KeyboardLocalePE=0807:00000807"
+Add-Content $File "TimeZoneName=W.Standard Europe Time"
 Add-Content $File "UserLocale=de-CH"
 Add-Content $File "UILanguage=de-DE"
 Add-Content $File ""

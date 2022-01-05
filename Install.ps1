@@ -10,8 +10,6 @@ $LogsShare = "Logs$"
 $Share  = "Hydration$"
 $Drive = "D:"
 $WIM = "$Drive" + "\Sources\install.wim"
-$Drive2 = "E:"
-$WIM2 = "$Drive2" + "\Sources\install.wim"
 
 $VMWDrivers = "C:\Program Files\Common Files\VMware\Drivers"
 $XENDrivers = "C:\Program Files\Citrix\XenTools\Drivers"
@@ -153,6 +151,8 @@ If (!(Test-Path -Path $Logs)) {New-Item -Path $Logs -Type Directory -ErrorAction
 New-Item -Path $Target -Type Directory -ErrorAction SilentlyContinue
 New-SmbShare -Name $Share -Path $Target -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
 New-SmbShare -Name $LogsShare -Path $Logs -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
+New-SmbShare -Name $Share -Path $Target -FullAccess "JEDER" -ErrorAction SilentlyContinue
+New-SmbShare -Name $LogsShare -Path $Logs -FullAccess "JEDER" -ErrorAction SilentlyContinue
 
 Write-Verbose "Importing Windows 2019 x64" -Verbose
 Remove-PSDrive -Name "DS001" -Force -ErrorAction SilentlyContinue

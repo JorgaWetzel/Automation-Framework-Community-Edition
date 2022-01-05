@@ -162,13 +162,53 @@ New-PSDrive -Name "DS001" -PSProvider "MDTProvider" -Root $Target -NetworkPath "
 # $OS = import-mdtoperatingsystem -path "DS001:\Operating Systems" -SourceFile "C:\Source\WS16.wim" -DestinationFolder "WS16" -Move -Verbose
 # $OSGUID = (Get-ItemProperty "DS001:\Operating Systems\WS16DDrive in WS16 WS16.wim").guid
 
+$user = 'oneict'
+$pass = 'ca228ffca20d54e486aa7d16a2881caa'
+$pair = "$($user):$($pass)"
+$encodedCreds = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($pair))
+$basicAuthValue = "Basic $encodedCreds"
+$Headers = @{
+    Authorization = $basicAuthValue
+}
+
+Write-Verbose "Downloading Windows Server 2019" -Verbose
+$uri = "https://chocoserver:8443/repository/oneict/SW_DVD9_Win_Server_STD_CORE_2019_1809.18_64Bit_German_DC_STD_MLF_X22-74332.ISO"
+Invoke-WebRequest -Uri $uri -OutFile "C:\Source\SW_DVD9_Win_Server_STD_CORE_2019_1809.18_64Bit_German_DC_STD_MLF_X22-74332.ISO" -Headers $Headers
+
+# Mount ISOs
+$MountSrv19 = Mount-DiskImage -ImagePath "C:\Source\SW_DVD9_Win_Server_STD_CORE_2019_1809.18_64Bit_German_DC_STD_MLF_X22-74332.ISO"
+$DriveSrv19 = ($MountSrv19 | Get-Volume).DriveLetter+":"
+Write-Verbose 'Finished Mounting Srv19'
+
+Write-Verbose "Downloading Windows 10" -Verbose
+$uri = "https://chocoserver:8443/repository/oneict/Windows10AIO.ISO"
+Invoke-WebRequest -Uri $uri -OutFile "C:\Source\Windows10AIO.ISO" -Headers $Headers
+
+# Mount ISOs
+$MountW10 = Mount-DiskImage -ImagePath "C:\Source\Windows10AIO.ISO"
+$DriveW10 = ($MountW10 | Get-Volume).DriveLetter+":"
+Write-Verbose 'Finished Mounting Win10'
+
+Write-Verbose "Downloading Windows 10" -Verbose
+$uri = "https://chocoserver:8443/repository/oneict/Windows11AIO.ISO"
+Invoke-WebRequest -Uri $uri -OutFile "C:\Source\Windows11AIO.ISO" -Headers $Headers
+
+# Mount ISOs
+$MountW11 = Mount-DiskImage -ImagePath "C:\Source\Windows11AIO.ISO"
+$DriveW11 = ($MountW11 | Get-Volume).DriveLetter+":"
+Write-Verbose 'Finished Mounting Win10'
+
 # Use Windows 2019 Evaluation WIM
-Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$Drive" -DestinationFolder "Windows 2019 X64"
+Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$DriveSrv19" -DestinationFolder "Windows 2019 X64"
 $OSGUID = (Get-ItemProperty "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim").guid
 
-Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$Drive2" -DestinationFolder "Windows 11"
+Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$DriveW10" -DestinationFolder "Windows 10"
+Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$DriveW10" -DestinationFolder "Windows 11"
 
 Write-Verbose "Creating Task Sequences" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 10 - Client Rollout" -Template "Client.xml" -Comments "" -ID "Win10" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows 10 Pro in Windows 10 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 11 - Client Rollout" -Template "Client.xml" -Comments "" -ID "Win11" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows 11 Pro in Windows 11 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "User State -Backup USMT" -Template "ClientReplace.xml" -Comments "" -ID "USMT" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows 11 Pro in Windows 11 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
 Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Standard" -Template "Server.xml" -Comments "" -ID "CTS-001" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
 Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Parallels RAS" -Template "Server.xml" -Comments "" -ID "CTS-002" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
 Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Parallels RDSH" -Template "Server.xml" -Comments "" -ID "CTS-003" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
@@ -188,8 +228,6 @@ Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - C
 import-mdttasksequence -path "DS001:\Task Sequences" -Name "Cloud - Domain Controller" -Template "StateRestore.xml" -Comments "" -ID "CTX-015" -Version "1.0" -Verbose
 import-mdttasksequence -path "DS001:\Task Sequences" -Name "Cloud - Automation Framework" -Template "StateRestore.xml" -Comments "" -ID "CTX-016" -Version "1.0" -Verbose
 import-mdttasksequence -path "DS001:\Task Sequences" -Name "Cloud - Automation Framework" -Template "StateRestore.xml" -Comments "" -ID "CTX-016" -Version "1.0" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 11 - Client Rollout" -Template "Client.xml" -Comments "Installiert Windows 11" -ID "Win11" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows 11 Pro in Windows 11 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "User State" -Template "ClientReplace.xml" -Comments "Backup USMT" -ID "USMT" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows 11 Pro in Windows 11 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
 
 
 new-item -path "DS001:\Packages" -enable "True" -Name "Windows 2019 x64" -Comments "" -ItemType "folder" -Verbose

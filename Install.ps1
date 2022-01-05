@@ -189,14 +189,14 @@ $MountW10 = Mount-DiskImage -ImagePath "C:\Source\Windows10AIO.ISO"
 $DriveW10 = ($MountW10 | Get-Volume).DriveLetter+":"
 Write-Verbose 'Finished Mounting Win10'
 
-Write-Verbose "Downloading Windows 10" -Verbose
+Write-Verbose "Downloading Windows 11" -Verbose
 $uri = "https://chocoserver:8443/repository/oneict/Windows11AIO.ISO"
 Invoke-WebRequest -Uri $uri -OutFile "C:\Source\Windows11AIO.ISO" -Headers $Headers
 
 # Mount ISOs
 $MountW11 = Mount-DiskImage -ImagePath "C:\Source\Windows11AIO.ISO"
 $DriveW11 = ($MountW11 | Get-Volume).DriveLetter+":"
-Write-Verbose 'Finished Mounting Win10'
+Write-Verbose 'Finished Mounting Win11'
 
 # Use Windows 2019 Evaluation WIM
 Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$DriveSrv19" -DestinationFolder "Windows 2019 X64"

@@ -39,3 +39,12 @@ Stop-Transcript
 wget -uri https://github.com/JorgaWetzel/Automation-Framework-Community-Edition/archive/master.zip -OutFile C:\Windows\Temp\Master.zip
 Expand-Archive -Path C:\Windows\Temp\Master.zip -DestinationPath C:\
 ren "C:\Automation-Framework-Community-Edition-master" "C:\Source"
+
+Write-Verbose "Run Master MDT install Script" -Verbose
+C:\Source\Install.ps1
+Write-Verbose "Run Hotfixes Script" -Verbose
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/JorgaWetzel/mdt-lab-vagrant/master/provision/install-hotfix.ps1 -OutFile C:\Source\install-hotfix.ps1; C:\Source\install-hotfix.ps1
+#Invoke-WebRequest -Uri https://raw.githubusercontent.com/JorgaWetzel/mdt-lab-vagrant/master/provision/install-dhcp.ps1 -OutFile C:\Source\install-dhcp.ps1; C:\Source\install-dhcp.ps1
+Write-Verbose "Inatall WDS" -Verbose
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/JorgaWetzel/mdt-lab-vagrant/master/provision/install-wds.ps1 -OutFile C:\Source\install-wds.ps1; C:\Source\install-wds.ps1
+

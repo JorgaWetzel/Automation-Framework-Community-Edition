@@ -8,8 +8,14 @@ $WDS = "C:\WDS"
 $Logs = "C:\Logs"
 $LogsShare = "Logs$"
 $Share  = "Hydration$"
-$Drive = "D:"
-$WIM = "$Drive" + "\Sources\install.wim"
+$DriveSRV = "D:"
+$WIMSRV = "$DriveSRV" + "\Sources\install.wim"
+$DriveW10 = "D:"
+$WIM10 = "$DriveW10" + "\Sources\install.wim"
+$DriveW11 = "D:"
+$WIM11 = "$DriveW11" + "\Sources\install.wim"
+
+
 
 $VMWDrivers = "C:\Program Files\Common Files\VMware\Drivers"
 $XENDrivers = "C:\Program Files\Citrix\XenTools\Drivers"
@@ -148,7 +154,9 @@ Import-Module "C:\Program Files\Microsoft Deployment Toolkit\bin\MicrosoftDeploy
 
 If (!(Test-Path -Path $Logs)) {New-Item -Path $Logs -Type Directory -ErrorAction SilentlyContinue | Out-Null }
 
-New-Item -Path $Target -Type Directory -ErrorAction SilentlyContinue
+New-Item -Path $Target -Type Directory -ErrorAction SilentlyContinuec
+New-Item -Path $Target\USMT -Type Directory -ErrorAction SilentlyContinue
+New-Item -Path $Target\Logs -Type Directory -ErrorAction SilentlyContinue
 New-SmbShare -Name $Share -Path $Target -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
 New-SmbShare -Name $LogsShare -Path $Logs -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
 New-SmbShare -Name $Share -Path $Target -FullAccess "JEDER" -ErrorAction SilentlyContinue
@@ -171,9 +179,10 @@ $Headers = @{
     Authorization = $basicAuthValue
 }
 
+<#
 Write-Verbose "Downloading Windows Server 2019" -Verbose
 $uri = "https://chocoserver:8443/repository/oneict/SW_DVD9_Win_Server_STD_CORE_2019_1809.18_64Bit_German_DC_STD_MLF_X22-74332.ISO"
-Invoke-WebRequest -Uri $uri -OutFile "C:\Source\SW_DVD9_Win_Server_STD_CORE_2019_1809.18_64Bit_German_DC_STD_MLF_X22-74332.ISO" -Headers $Headers
+# Invoke-WebRequest -Uri $uri -OutFile "C:\Source\SW_DVD9_Win_Server_STD_CORE_2019_1809.18_64Bit_German_DC_STD_MLF_X22-74332.ISO" -Headers $Headers
 
 # Mount ISOs
 $MountSrv19 = Mount-DiskImage -ImagePath "C:\Source\SW_DVD9_Win_Server_STD_CORE_2019_1809.18_64Bit_German_DC_STD_MLF_X22-74332.ISO"
@@ -182,7 +191,7 @@ Write-Verbose 'Finished Mounting Srv19'
 
 Write-Verbose "Downloading Windows 10" -Verbose
 $uri = "https://chocoserver:8443/repository/oneict/Windows10AIO.ISO"
-Invoke-WebRequest -Uri $uri -OutFile "C:\Source\Windows10AIO.ISO" -Headers $Headers
+# Invoke-WebRequest -Uri $uri -OutFile "C:\Source\Windows10AIO.ISO" -Headers $Headers
 
 # Mount ISOs
 $MountW10 = Mount-DiskImage -ImagePath "C:\Source\Windows10AIO.ISO"
@@ -191,19 +200,22 @@ Write-Verbose 'Finished Mounting Win10'
 
 Write-Verbose "Downloading Windows 11" -Verbose
 $uri = "https://chocoserver:8443/repository/oneict/Windows11AIO.ISO"
-Invoke-WebRequest -Uri $uri -OutFile "C:\Source\Windows11AIO.ISO" -Headers $Headers
+# Invoke-WebRequest -Uri $uri -OutFile "C:\Source\Windows11AIO.ISO" -Headers $Headers
 
 # Mount ISOs
 $MountW11 = Mount-DiskImage -ImagePath "C:\Source\Windows11AIO.ISO"
 $DriveW11 = ($MountW11 | Get-Volume).DriveLetter+":"
 Write-Verbose 'Finished Mounting Win11'
 
+#>
+
 # Use Windows 2019 Evaluation WIM
 Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$DriveSrv19" -DestinationFolder "Windows 2019 X64"
 $OSGUID = (Get-ItemProperty "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim").guid
-
 Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$DriveW10" -DestinationFolder "Windows 10"
-Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$DriveW10" -DestinationFolder "Windows 11"
+$OSGUID10 = (Get-ItemProperty "DS001:\Operating Systems\Windows 10 Pro in Windows 10 install.wim").guid
+Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$DriveW11" -DestinationFolder "Windows 11"
+$OSGUID11 = (Get-ItemProperty "DS001:\Operating Systems\Windows 11 Pro in Windows 11 install.wim").guid
 
 Write-Verbose "Creating Task Sequences" -Verbose
 Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 10 - Client Rollout" -Template "Client.xml" -Comments "" -ID "Win10" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows 10 Pro in Windows 10 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
@@ -328,8 +340,11 @@ $ipV4 = Test-Connection -ComputerName (hostname) -Count 1  | Select-Object -Expa
 $ip = $ipV4.IPAddressToString
 $File = "$Target\Control\CustomSettings.ini"
 Add-Content $File "[Settings]"
-Add-Content $File "Priority=Default, Init, ByWDS,ByVirtual, ByDesktop, ByLaptop, "
+Add-Content $File "Priority=Default, Init, ByWDS,ByVirtual, ByDesktop, ByLaptop,"
 Add-Content $File "Properties=MyCustomProperty,ComputerSerialNumber, ComputerTypeName"
+Add-Content $File ""
+Add-Content $File "[Init]"
+Add-Content $File 'ComputerSerialNumber=#Right("%SerialNumber%",5)#'
 Add-Content $File ""
 Add-Content $File "[ByWDS]"
 Add-Content $File "SubSection=WDS-%WDSServer%"
@@ -343,30 +358,19 @@ Add-Content $File ""
 Add-Content $File "[ByVirtual]"
 Add-Content $File "Subsection=Virtual-%IsVM%"
 Add-Content $File ""
+Add-Content $File "[Default]"
+Add-Content $File "' Skip Sysprep"
+Add-Content $File "SLShareDynamicLogging=\\$ip\Hydration$\Logs\%hostname%"
+Add-Content $File ""
 Add-Content $File "' Computer Name"
 Add-Content $File "OSDComputerName=%ComputerTypeName%-%ComputerSerialNumber%-W10"
 Add-Content $File ""
-Add-Content $File "WindowsUpdate=False"
-Add-Content $File ""
-Add-Content $File "_SMSTSOrgName=oneict.ch"
-Add-Content $File "_SMSTSPackageName=MDT Automation Framework"
-Add-Content $File "SkipRoles=YES"
-Add-Content $File "SkipSummary=YES"
-Add-Content $File "SkipBitLocker=YES"
-Add-Content $File "SkipFinalSummary=YES"
-Add-Content $File "AdminPassword=P@ssw0rd"
-Add-Content $File "SkipApplications=YES"
-Add-Content $File "FinishAction=REBOOT"
-Add-Content $File "EventService=http://$ip:9800"
-Add-Content $File "SLSHARE=\\$ip\logs$"
-Add-Content $File ""
 Add-Content $File "' Skip Locale Settings"
-Add-Content $File "SkipLocaleSelection=NO"
+Add-Content $File "SkipLocaleSelection=YES"
 Add-Content $File "KeyboardLocale=de-CH"
 Add-Content $File "KeyboardLocalePE=de-CH"
 Add-Content $File "KeyboardLocale=0807:00000807"
 Add-Content $File "KeyboardLocalePE=0807:00000807"
-Add-Content $File "TimeZoneName=W.Standard Europe Time"
 Add-Content $File "UserLocale=de-CH"
 Add-Content $File "UILanguage=de-DE"
 Add-Content $File ""
@@ -374,32 +378,86 @@ Add-Content $File "SkipTimeZone=YES"
 Add-Content $File "TimeZone=110"
 Add-Content $File "TimeZoneName=W. Europe Standard Time"
 Add-Content $File ""
+Add-Content $File "SkipProductKey=YES"
+Add-Content $File "' Skip Admin Password"
+Add-Content $File "UserID=wksadmin"
+Add-Content $File "AdminPassword=Local.21"
+Add-Content $File "SkipAdminPassword=YES"
+Add-Content $File "' Default Task"
+Add-Content $File "' TaskSequenceID=01"
+Add-Content $File ""
+Add-Content $File "_SMSTSOrgName=oneICT Rollout"
+Add-Content $File "' DoNotCreateExtraPartition=YES"
+Add-Content $File ""
 Add-Content $File "SkipDomainMemberShip=NO"
-Add-Content $File "'JoinDomain=aaag.local"
-Add-Content $File "'DomainAdmin=administrator"
-Add-Content $File "'DomainAdminDomain=aaag.local"
-Add-Content $File "'DomainAdminPassword=P@ssw0rd"
+Add-Content $File "JoinDomain=customer.local"
+Add-Content $File "DomainAdmin=Administrator"
+Add-Content $File "DomainAdminDomain=customer.local"
+Add-Content $File "DomainAdminPassword=P@ssw0rd"
+Add-Content $File ""
+Add-Content $File "SkipTimeZone=YES"
+Add-Content $File "TimeZone=110"
+Add-Content $File "TimeZoneName=W. Europe Standard Time"
+Add-Content $File ""
+Add-Content $File "' Name MDT"
+Add-Content $File "OSInstall=Y"
+Add-Content $File "SkipAdminPassword=YES"
+Add-Content $File "SkipApplications=NO"
+Add-Content $File "SkipBDDWelcome=YES"
+Add-Content $File "SkipBitLocker=YES"
+Add-Content $File "'SkipComputerName=YES"
+Add-Content $File "'SkipDeploymentType=YES"
+Add-Content $File "'SkipDomainMembership=YES"
+Add-Content $File "SkipFinalSummary=YES"
+Add-Content $File "'SkipLocaleSelection=YES"
+Add-Content $File "'SkipPackageDisplay=YES"
+Add-Content $File "'SkipProductKey=YES"
+Add-Content $File "'SkipRoles=YES"
+Add-Content $File "SkipSummary=NO"
+Add-Content $File "'SkipTaskSequence=YES"
+Add-Content $File ""
+Add-Content $File "'UserExit=UserExit.vbs"
+Add-Content $File "'OSDComputerName=#GetOfflineComputername()#"
+Add-Content $File ""
+Add-Content $File "SkipUserData=NO"
+Add-Content $File "UserDataLocation=NETWORK"
+Add-Content $File "UDShare=\\$ip\Hydration$\USMT"
+Add-Content $File "'UDDir=%Username%"
+Add-Content $File "'UDDir=%ComputerTypeName%-%ComputerSerialNumber%-W10"
+Add-Content $File "UDDir=%hostname%"
+Add-Content $File ""
+Add-Content $File "'https://docs.microsoft.com/en-us/windows/deployment/usmt/usmt-loadstate-syntax"
+Add-Content $File "'https://docs.microsoft.com/en-us/windows/deployment/usmt/usmt-scanstate-syntax"
 Add-Content $File ""
 Add-Content $File "UserDataLocation=%UDShare%\%Hostname%"
 Add-Content $File "ScanStateArgs=/v:5 /o /c /all"
-Add-Content $File "'ScanStateArgs=/v:5 /o /c /ue:*\* /uel:90"
+Add-Content $File "'ScanStateArgs=/v:5 /o /c /uel:365"
 Add-Content $File "LoadStateArgs=/v:5 /c /lac"
+Add-Content $File "'LoadStateArgs=/v:5 /mu:customer\sto:customer\oneict /lac"
 Add-Content $File ""
 Add-Content $File "USMTMigFiles001=MigApp.xml"
 Add-Content $File "USMTMigFiles002=MigUser.xml"
 Add-Content $File "USMTMigFiles003=MigDocs.xml"
-Add-Content $File "USMTMigFiles004=ExcludeDrives_D_to_Z.xml"
+Add-Content $File "USMTMigFiles004=Exclude.xml"
 Add-Content $File "USMTMigFiles005=ExcludeSystemFolders.xml"
+Add-Content $File "'USMTMigFiles006=MigAppO2019.xml -> error"
+Add-Content $File "'USMTMigFiles007="
+Add-Content $File "'USMTMigFiles008=MigUser_Including_Downloads.xml"
+Add-Content $File "'USMTMigFiles009=Win7and8toWin10StickyNotes.xml"
+Add-Content $File "'USMTMigFiles010=Win10.xml"
 Add-Content $File ""
-Add-Content $File "SkipCapture=Yes"
-Add-Content $File "'BackupLocation=NETWORK"
-Add-Content $File "'BackupShare=\\$ip\USMT\Backup"
-Add-Content $File "'BackupDir=%OSDComputerName%"
-Add-Content $File "'BackupFile=%ComputerName%.wim"
+Add-Content $File "SkipComputerBackup=NO"
+Add-Content $File "ComputerBackuplocation=NETWORK"
+Add-Content $File "BackupShare=\\192.168.5.101\Hydration$"
+Add-Content $File "BackupDir=USMT\Backup"
+Add-Content $File "BackupFile=%computername%.wim"
+Add-Content $File "'BackupFile=%hostname%_#day(date) & "-" & month(date) & "-" & year(date)#.wim"
 Add-Content $File ""
-Add-Content $File "'Administrators001=AAAG\WKSADMIN"
+Add-Content $File "Administrators001=customer.local\WKS_Admin"
 Add-Content $File ""
-Add-Content $File "[Laptop-True]"
+Add-Content $File "EventService=http://$ip:9800"
+Add-Content $File ""
+Add-Content $File "[Laptop-True] "
 Add-Content $File "ComputerTypeName=NB"
 Add-Content $File ""
 Add-Content $File "[Desktop-True]"
@@ -414,6 +472,10 @@ $default.Replace('SkipAdminPassword=NO','SkipAdminPassword=YES') | Out-File $Fil
 
 $default = Get-Content $File
 $default.Replace('MyCustomProperty','WindowsUpdate') | Out-File $File -Encoding ascii
+
+$default = Get-Content $Target\Scripts\Custom\ComputerRename.ps1
+$default.Replace('192.168.5.101',$ip) | Out-File $File -Encoding ascii
+
 
 $File = "$Target\Control\Bootstrap.ini"
 Get-Content $File | ForEach-Object {$_ -replace "*", ""} | Out-File $File
@@ -459,6 +521,28 @@ Foreach ($Target in $Targets){
 	$_.name -eq "OSGUID"} | ForEach-Object {$_."#text" = $OSGUID}
     $TSXML.Save($TSPath)
 }
+
+
+Write-Verbose "Working on C:\Hydration\Control\WIN10\ts.xml" -Verbose
+#Load XML data for the current file
+$TSPath = "C:\Hydration\Control\WIN10\ts.xml"
+[xml]$TSXML = Get-Content -Path "C:\Hydration\Control\WIN10\ts.xml"
+$TSXML.sequence.globalVarList.variable | Where {$_.name -eq "OSGUID"} | ForEach-Object {$_."#text" = $OSGUID10}
+$TSXML.sequence.group | Where {$_.Name -eq "Install"} | ForEach-Object {$_.step} | Where {
+$_.Name -eq "Install Operating System"} | ForEach-Object {$_.defaultVarList.variable} | Where {
+$_.name -eq "OSGUID"} | ForEach-Object {$_."#text" = $OSGUID10}
+$TSXML.Save($TSPath)
+
+Write-Verbose "Working on C:\Hydration\Control\WIN11\ts.xml" -Verbose
+#Load XML data for the current file
+$TSPath = "C:\Hydration\Control\WIN11\ts.xml"
+[xml]$TSXML = Get-Content -Path "C:\Hydration\Control\WIN11\ts.xml"
+$TSXML.sequence.globalVarList.variable | Where {$_.name -eq "OSGUID"} | ForEach-Object {$_."#text" = $OSGUID11}
+$TSXML.sequence.group | Where {$_.Name -eq "Install"} | ForEach-Object {$_.step} | Where {
+$_.Name -eq "Install Operating System"} | ForEach-Object {$_.defaultVarList.variable} | Where {
+$_.name -eq "OSGUID"} | ForEach-Object {$_."#text" = $OSGUID11}
+$TSXML.Save($TSPath)
+
 
 Write-Verbose "Enable Monitoring" -Verbose
 New-NetFirewallRule -Name "MDT_Monitor (Inbound,TCP)" -DisplayName "MDT_Monitor (Inbound,TCP)" -Description "Inbound rules for the TCP protocol for MDT_Monitor" -LocalPort 9800 -Protocol "TCP" -Direction "Inbound" -Action "Allow" -ErrorAction SilentlyContinue

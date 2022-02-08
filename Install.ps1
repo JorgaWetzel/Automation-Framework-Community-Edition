@@ -8,7 +8,7 @@ $WDS = "C:\WDS"
 $Logs = "C:\Logs"
 $LogsShare = "Logs$"
 $Share  = "Hydration$"
-$DriveSRV = "D:"
+$DriveSRV19 = "F:"
 $WIMSRV = "$DriveSRV" + "\Sources\install.wim"
 $DriveW10 = "E:"
 $WIM10 = "$DriveW10" + "\Sources\install.wim"
@@ -154,13 +154,10 @@ Import-Module "C:\Program Files\Microsoft Deployment Toolkit\bin\MicrosoftDeploy
 
 If (!(Test-Path -Path $Logs)) {New-Item -Path $Logs -Type Directory -ErrorAction SilentlyContinue | Out-Null }
 
-New-Item -Path $Target -Type Directory -ErrorAction SilentlyContinuec
-New-Item -Path $Target\USMT -Type Directory -ErrorAction SilentlyContinue
-New-Item -Path $Target\Logs -Type Directory -ErrorAction SilentlyContinue
+New-Item -Path $Target -Type Directory -ErrorAction SilentlyContinue
 New-SmbShare -Name $Share -Path $Target -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
 New-SmbShare -Name $LogsShare -Path $Logs -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
-New-SmbShare -Name $Share -Path $Target -FullAccess "JEDER" -ErrorAction SilentlyContinue
-New-SmbShare -Name $LogsShare -Path $Logs -FullAccess "JEDER" -ErrorAction SilentlyContinue
+
 
 Write-Verbose "Importing Windows 2019 x64" -Verbose
 Remove-PSDrive -Name "DS001" -Force -ErrorAction SilentlyContinue
@@ -169,6 +166,10 @@ New-PSDrive -Name "DS001" -PSProvider "MDTProvider" -Root $Target -NetworkPath "
 # Use Custom WIM - Remember to Change under Task Sequences as well
 # $OS = import-mdtoperatingsystem -path "DS001:\Operating Systems" -SourceFile "C:\Source\WS16.wim" -DestinationFolder "WS16" -Move -Verbose
 # $OSGUID = (Get-ItemProperty "DS001:\Operating Systems\WS16DDrive in WS16 WS16.wim").guid
+
+
+New-Item -Path $Target\USMT -Type Directory -ErrorAction SilentlyContinue
+New-SmbShare -Name USMT$ -Path $Target\USMT -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
 
 $user = 'oneict'
 $pass = 'ca228ffca20d54e486aa7d16a2881caa'
@@ -451,7 +452,7 @@ Add-Content $File "ComputerBackuplocation=NETWORK"
 Add-Content $File "BackupShare=\\192.168.5.101\Hydration$"
 Add-Content $File "BackupDir=USMT\Backup"
 Add-Content $File "BackupFile=%computername%.wim"
-Add-Content $File "'BackupFile=%hostname%_#day(date) & "-" & month(date) & "-" & year(date)#.wim"
+Add-Content $File "'BackupFile=%hostname%_#day(date) & '-' & month(date) & '-' & year(date)#.wim"
 Add-Content $File ""
 Add-Content $File "Administrators001=customer.local\WKS_Admin"
 Add-Content $File ""

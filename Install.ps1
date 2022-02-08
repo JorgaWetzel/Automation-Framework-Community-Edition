@@ -10,9 +10,9 @@ $LogsShare = "Logs$"
 $Share  = "Hydration$"
 $DriveSRV19 = "F:"
 $WIMSRV = "$DriveSRV" + "\Sources\install.wim"
-$DriveW10 = "E:"
+$DriveW10 = "D:"
 $WIM10 = "$DriveW10" + "\Sources\install.wim"
-$DriveW11 = "F:"
+$DriveW11 = "E:"
 $WIM11 = "$DriveW11" + "\Sources\install.wim"
 
 

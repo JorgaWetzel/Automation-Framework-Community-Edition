@@ -27,18 +27,18 @@ CD $Source
 $ProgressPreference = 'SilentlyContinue'
 
 Write-Verbose "Checking if install media exists" -Verbose
-if (!(Test-Path $WIM)) {
+if (!(Test-Path $WIMSRV)) {
 			Stop-Process "WIM file $WIM not found" }
 
 Write-Verbose "Disable IE Security" -Verbose
 reg add "HKLM\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}" /v IsInstalled /t REG_DWORD /d 0 /f
 reg add "HKLM\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}" /v IsInstalled /t REG_DWORD /d 0 /f
 
-# Windows ADK for Windows 10
+# Windows ADK for Windows 11
 $Vendor = "Microsoft"
-$Product = "ADK for Windows 10"
-$Version = "2004"
-$uri = "https://go.microsoft.com/fwlink/?linkid=2120254"
+$Product = "ADK for Windows 11"
+$Version = "10.1.22000.1"
+$uri = "https://go.microsoft.com/fwlink/?linkid=2165884"
 $PackageName = "adksetup.exe"
 $UnattendedArgs1 = '/quiet /layout .\'
 $UnattendedArgs2 = '/Features OptionId.DeploymentTools /norestart /quiet /ceip off'
@@ -59,8 +59,8 @@ Write-Verbose "Starting Installation of $Vendor $Product $Version" -Verbose
 
 $Vendor = "Microsoft"
 $Product = "Windows PE add-on for ADK"
-$Version = "2004"
-$uri = "https://go.microsoft.com/fwlink/?linkid=2120253"
+$Version = "10.1.22000.1"
+$uri = "https://go.microsoft.com/fwlink/?linkid=2166133"
 $PackageName = "adkwinpesetup.exe"
 $UnattendedArgs = '/Features OptionId.WindowsPreinstallationEnvironment /norestart /quiet /ceip off'
 
@@ -71,7 +71,7 @@ Write-Verbose "Starting Installation of $Vendor $Product $Version" -Verbose
 # Microsoft Deployment Toolkit
 $Vendor = "Microsoft"
 $Product = "Deployment Toolkit"
-$Version = "6.3.8443.1000"
+$Version = "6.3.8456.1000"
 $uri = "https://download.microsoft.com/download/3/3/9/339BE62D-B4B8-4956-B58D-73C4685FC492/MicrosoftDeploymentToolkit_x64.msi"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
 $LogApp = "${env:SystemRoot}" + "\Temp\$PackageName.log"
@@ -139,8 +139,8 @@ Write-Verbose "Starting Installation of $Vendor $Product $Version" -Verbose
 # NotePad ++
 $Vendor = "Misc"
 $Product = "Notepad++"
-$Version = "7.8.9"
-$uri = "https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v7.8.9/npp.7.8.9.Installer.x64.exe"
+$Version = "8.4.1"
+$uri = "https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.4.1/npp.8.4.1.Installer.x64.exe"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
 $UnattendedArgs = '/S'
 
@@ -158,14 +158,13 @@ New-Item -Path $Target -Type Directory -ErrorAction SilentlyContinue
 New-SmbShare -Name $Share -Path $Target -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
 New-SmbShare -Name $LogsShare -Path $Logs -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
 
-
-Write-Verbose "Importing Windows 2019 x64" -Verbose
+Write-Verbose "Importing Windows 2022 x64" -Verbose
 Remove-PSDrive -Name "DS001" -Force -ErrorAction SilentlyContinue
 New-PSDrive -Name "DS001" -PSProvider "MDTProvider" -Root $Target -NetworkPath "\\$ENV:COMPUTERNAME\$Share" -Description "Hydration" | Add-MDTPersistentDrive
 
 # Use Custom WIM - Remember to Change under Task Sequences as well
-# $OS = import-mdtoperatingsystem -path "DS001:\Operating Systems" -SourceFile "C:\Source\WS16.wim" -DestinationFolder "WS16" -Move -Verbose
-# $OSGUID = (Get-ItemProperty "DS001:\Operating Systems\WS16DDrive in WS16 WS16.wim").guid
+# $OS = import-mdtoperatingsystem -path "DS001:\Operating Systems" -SourceFile "C:\Source\WS22.wim" -DestinationFolder "WS22" -Move -Verbose
+# $OSGUID = (Get-ItemProperty "DS001:\Operating Systems\WS22DDrive in WS22 WS22.wim").guid
 
 New-Item -Path $Target\USMT -Type Directory -ErrorAction SilentlyContinue
 New-SmbShare -Name USMT$ -Path $Target\USMT -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
@@ -208,9 +207,8 @@ $MountW11 = Mount-DiskImage -ImagePath "C:\Source\Windows11AIO.ISO"
 $DriveW11 = ($MountW11 | Get-Volume).DriveLetter+":"
 Write-Verbose 'Finished Mounting Win11'
 
- }
-else
-{
+}
+
 if(Test-path "\\vmware-host\Shared Folders\-vagrant\Windows10AIO.ISO" -PathType leaf){
 Copy-Item -Path "\\vmware-host\Shared Folders\-vagrant\*.iso" -Destination "C:\tmp\"
 # Mount SRV19
@@ -228,7 +226,7 @@ $MountW11 = Mount-DiskImage -ImagePath "C:\tmp\Windows11AIO.ISO"
 $DriveW11 = ($MountW11 | Get-Volume).DriveLetter+":"
 Write-Verbose 'Finished Mounting Win11'
 }   
-}
+
 
 # Use Windows 2019 Evaluation WIM
 Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$DriveSrv19" -DestinationFolder "Windows 2019 X64"
@@ -361,6 +359,7 @@ cmd /C "xcopy $Source\Applications-master $Target\Applications\ /h/i/c/k/e/r/y/q
 Write-Verbose "Customizing CS and Bootstrap" -Verbose
 $ipV4 = Test-Connection -ComputerName (hostname) -Count 1  | Select-Object -ExpandProperty IPV4Address
 $ip = $ipV4.IPAddressToString
+$MDTServer = $env:ComputerName
 $File = "$Target\Control\CustomSettings.ini"
 Add-Content $File "[Settings]"
 Add-Content $File "Priority=Default, Init, ByWDS,ByVirtual, ByDesktop, ByLaptop,"

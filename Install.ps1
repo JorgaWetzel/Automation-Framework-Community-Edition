@@ -8,11 +8,11 @@ $WDS = "C:\WDS"
 $Logs = "C:\Logs"
 $LogsShare = "Logs$"
 $Share  = "Hydration$"
-$DriveSRV19 = "F:"
+$DriveSRV19 = "D:"
 $WIMSRV = "$DriveSRV" + "\Sources\install.wim"
 $DriveW10 = "E:"
 $WIM10 = "$DriveW10" + "\Sources\install.wim"
-$DriveW11 = "D:"
+$DriveW11 = "F:"
 $WIM11 = "$DriveW11" + "\Sources\install.wim"
 
 
@@ -167,10 +167,11 @@ New-PSDrive -Name "DS001" -PSProvider "MDTProvider" -Root $Target -NetworkPath "
 # $OS = import-mdtoperatingsystem -path "DS001:\Operating Systems" -SourceFile "C:\Source\WS16.wim" -DestinationFolder "WS16" -Move -Verbose
 # $OSGUID = (Get-ItemProperty "DS001:\Operating Systems\WS16DDrive in WS16 WS16.wim").guid
 
-
 New-Item -Path $Target\USMT -Type Directory -ErrorAction SilentlyContinue
 New-SmbShare -Name USMT$ -Path $Target\USMT -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
 
+if(-not(Test-path $WIM11 -PathType leaf))
+ {
 $user = 'oneict'
 $pass = 'ca228ffca20d54e486aa7d16a2881caa'
 $pair = "$($user):$($pass)"
@@ -179,7 +180,6 @@ $basicAuthValue = "Basic $encodedCreds"
 $Headers = @{
     Authorization = $basicAuthValue
 }
-
 
 Write-Verbose "Downloading Windows Server 2019" -Verbose
 $uri = "https://chocoserver:8443/repository/oneict/SW_DVD9_Win_Server_STD_CORE_2019_1809.18_64Bit_German_DC_STD_MLF_X22-74332.ISO"
@@ -208,7 +208,27 @@ $MountW11 = Mount-DiskImage -ImagePath "C:\Source\Windows11AIO.ISO"
 $DriveW11 = ($MountW11 | Get-Volume).DriveLetter+":"
 Write-Verbose 'Finished Mounting Win11'
 
-#>
+ }
+else
+{
+if(Test-path "\\vmware-host\Shared Folders\-vagrant\Windows10AIO.ISO" -PathType leaf)}
+Copy-Item -Path "\\vmware-host\Shared Folders\-vagrant\*.iso" -Destination "C:\tmp\"
+# Mount SRV19
+$MountSrv19 = Mount-DiskImage -ImagePath "C:\tmp\SW_DVD9_Win_Server_STD_CORE_2019_1909.4_64Bit_German_DC_STD_MLF_X22-29335.ISO"
+$DriveSrv19 = ($MountSrv19 | Get-Volume).DriveLetter+":"
+Write-Verbose 'Finished Mounting Srv19'
+
+# Mount Win10
+$MountW10 = Mount-DiskImage -ImagePath "C:\tmp\Windows10AIO.ISO"
+$DriveW10 = ($MountW10 | Get-Volume).DriveLetter+":"
+Write-Verbose 'Finished Mounting Win10'
+
+# Mount Win11
+$MountW11 = Mount-DiskImage -ImagePath "C:\tmp\Windows11AIO.ISO"
+$DriveW11 = ($MountW11 | Get-Volume).DriveLetter+":"
+Write-Verbose 'Finished Mounting Win11'
+}   
+}
 
 # Use Windows 2019 Evaluation WIM
 Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$DriveSrv19" -DestinationFolder "Windows 2019 X64"

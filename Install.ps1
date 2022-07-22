@@ -169,6 +169,7 @@ New-PSDrive -Name "DS001" -PSProvider "MDTProvider" -Root $Target -NetworkPath "
 New-Item -Path $Target\USMT -Type Directory -ErrorAction SilentlyContinue
 New-SmbShare -Name USMT$ -Path $Target\USMT -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
 
+<#
 if(-not(Test-path $WIM11 -PathType leaf))
  {
 $user = 'oneict'
@@ -208,6 +209,7 @@ $DriveW11 = ($MountW11 | Get-Volume).DriveLetter+":"
 Write-Verbose 'Finished Mounting Win11'
 
 }
+#>
 
 if(Test-path "\\vmware-host\Shared Folders\-vagrant\Windows10AIO.ISO" -PathType leaf){
 Copy-Item -Path "\\vmware-host\Shared Folders\-vagrant\*.iso" -Destination "C:\tmp\"

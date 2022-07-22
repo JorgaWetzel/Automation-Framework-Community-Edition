@@ -211,7 +211,7 @@ Write-Verbose 'Finished Mounting Win11'
  }
 else
 {
-if(Test-path "\\vmware-host\Shared Folders\-vagrant\Windows10AIO.ISO" -PathType leaf)}
+if(Test-path "\\vmware-host\Shared Folders\-vagrant\Windows10AIO.ISO" -PathType leaf){
 Copy-Item -Path "\\vmware-host\Shared Folders\-vagrant\*.iso" -Destination "C:\tmp\"
 # Mount SRV19
 $MountSrv19 = Mount-DiskImage -ImagePath "C:\tmp\SW_DVD9_Win_Server_STD_CORE_2019_1909.4_64Bit_German_DC_STD_MLF_X22-29335.ISO"

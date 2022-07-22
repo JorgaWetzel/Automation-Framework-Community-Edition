@@ -180,7 +180,7 @@ $Headers = @{
     Authorization = $basicAuthValue
 }
 
-<#
+
 Write-Verbose "Downloading Windows Server 2019" -Verbose
 $uri = "https://chocoserver:8443/repository/oneict/SW_DVD9_Win_Server_STD_CORE_2019_1809.18_64Bit_German_DC_STD_MLF_X22-74332.ISO"
 # Invoke-WebRequest -Uri $uri -OutFile "C:\Source\SW_DVD9_Win_Server_STD_CORE_2019_1809.18_64Bit_German_DC_STD_MLF_X22-74332.ISO" -Headers $Headers
@@ -266,6 +266,7 @@ $Headers = @{
     Authorization = $basicAuthValue
 }
 
+
 Write-Verbose "Downloading Applications" -Verbose
 $uri = "https://chocoserver:8443/repository/oneict/Applications.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
@@ -273,6 +274,7 @@ Invoke-WebRequest -Uri $uri -OutFile "$Source\$PackageName" -Headers $Headers
 Expand-Archive -Force -Path $PackageName -DestinationPath .
 Remove-Item $Target\Applications
 Move-Item -Path $Source\Applications\ -Destination $Target -Force
+
 
 $uri = "https://chocoserver:8443/repository/oneict/Control.zip"
 $PackageName = $uri.Substring($uri.LastIndexOf("/") + 1)
@@ -449,8 +451,8 @@ Add-Content $File "'USMTMigFiles010=Win10.xml"
 Add-Content $File ""
 Add-Content $File "SkipComputerBackup=NO"
 Add-Content $File "ComputerBackuplocation=NETWORK"
-Add-Content $File "BackupShare=\\192.168.5.101\Hydration$"
-Add-Content $File "BackupDir=USMT\Backup"
+Add-Content $File "BackupShare=\\$ip\Hydration$"
+Add-Content $File "BackupDir=Backup"
 Add-Content $File "BackupFile=%computername%.wim"
 Add-Content $File "'BackupFile=%hostname%_#day(date) & '-' & month(date) & '-' & year(date)#.wim"
 Add-Content $File ""

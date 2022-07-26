@@ -512,7 +512,7 @@ Add-Content $File "DeployRoot=\\$IP\$Share"
 Add-Content $File ""
 Add-Content $File "UserID=Administrator"
 Add-Content $File "UserPassword=P@ssw0rd"
-Add-Content $File "UserDomain=WORKGROUP"
+Add-Content $File "UserDomain=mylab.com"
 Add-Content $File "KeyboardLocalePE=0807:00000807"
 
 $xmlfile = "$Target\Control\Settings.xml"

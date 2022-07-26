@@ -491,14 +491,14 @@ Add-Content $File "[Virtual-True]"
 Add-Content $File "ComputerTypeName=VM"
 
 
-$default = Get-Content $File
-$default.Replace('SkipAdminPassword=NO','SkipAdminPassword=YES') | Out-File $File -Encoding ascii
+## $default = Get-Content $File
+## $default.Replace('SkipAdminPassword=NO','SkipAdminPassword=YES') | Out-File $File -Encoding ascii
 
-$default = Get-Content $File
-$default.Replace('MyCustomProperty','WindowsUpdate') | Out-File $File -Encoding ascii
+## $default = Get-Content $File
+## $default.Replace('MyCustomProperty','WindowsUpdate') | Out-File $File -Encoding ascii
 
-$default = Get-Content $Target\Scripts\Custom\ComputerRename.ps1
-$default.Replace('192.168.5.101',$ip) | Out-File $File -Encoding ascii
+## $default = Get-Content $Target\Scripts\Custom\ComputerRename.ps1
+## $default.Replace('192.168.5.101',$ip) | Out-File $File -Encoding ascii
 
 
 $File = "$Target\Control\Bootstrap.ini"

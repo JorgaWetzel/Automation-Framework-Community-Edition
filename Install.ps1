@@ -38,7 +38,7 @@ reg add "HKLM\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37E
 $Vendor = "Microsoft"
 $Product = "ADK for Windows 11"
 $Version = "10.1.22000.1"
-$uri = "https://go.microsoft.com/fwlink/?linkid=2165884"
+$uri = "https://go.microsoft.com/fwlink/?linkid=2196127"
 $PackageName = "adksetup.exe"
 $UnattendedArgs1 = '/quiet /layout .\'
 $UnattendedArgs2 = '/Features OptionId.DeploymentTools /norestart /quiet /ceip off'
@@ -60,7 +60,7 @@ Write-Verbose "Starting Installation of $Vendor $Product $Version" -Verbose
 $Vendor = "Microsoft"
 $Product = "Windows PE add-on for ADK"
 $Version = "10.1.22000.1"
-$uri = "https://go.microsoft.com/fwlink/?linkid=2166133"
+$uri = "https://go.microsoft.com/fwlink/?linkid=2196224"
 $PackageName = "adkwinpesetup.exe"
 $UnattendedArgs = '/Features OptionId.WindowsPreinstallationEnvironment /norestart /quiet /ceip off'
 
@@ -155,8 +155,8 @@ Import-Module "C:\Program Files\Microsoft Deployment Toolkit\bin\MicrosoftDeploy
 If (!(Test-Path -Path $Logs)) {New-Item -Path $Logs -Type Directory -ErrorAction SilentlyContinue | Out-Null }
 
 New-Item -Path $Target -Type Directory -ErrorAction SilentlyContinue
-New-SmbShare -Name $Share -Path $Target -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
-New-SmbShare -Name $LogsShare -Path $Logs -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
+New-SmbShare -Name $Share -Path $Target -FullAccess "JEDER" -ErrorAction SilentlyContinue
+New-SmbShare -Name $LogsShare -Path $Logs -FullAccess "JEDER" -ErrorAction SilentlyContinue
 
 Write-Verbose "Importing Windows 2022 x64" -Verbose
 Remove-PSDrive -Name "DS001" -Force -ErrorAction SilentlyContinue
@@ -167,7 +167,7 @@ New-PSDrive -Name "DS001" -PSProvider "MDTProvider" -Root $Target -NetworkPath "
 # $OSGUID = (Get-ItemProperty "DS001:\Operating Systems\WS22DDrive in WS22 WS22.wim").guid
 
 New-Item -Path $Target\USMT -Type Directory -ErrorAction SilentlyContinue
-New-SmbShare -Name USMT$ -Path $Target\USMT -FullAccess "EVERYONE" -ErrorAction SilentlyContinue
+New-SmbShare -Name USMT$ -Path $Target\USMT -FullAccess "JEDER" -ErrorAction SilentlyContinue
 
 <#
 if(-not(Test-path $WIM11 -PathType leaf))
@@ -230,9 +230,9 @@ Write-Verbose 'Finished Mounting Win11'
 }   
 
 
-# Use Windows 2019 Evaluation WIM
-Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$DriveSrv19" -DestinationFolder "Windows 2019 X64"
-$OSGUID = (Get-ItemProperty "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim").guid
+# Use Windows 2022 Evaluation WIM
+Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$Drive" -DestinationFolder "Windows 2022 X64"
+$OSGUID = (Get-ItemProperty "DS001:\Operating Systems\Windows Server 2022 SERVERSTANDARD in Windows 2022 X64 install.wim").guid
 Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$DriveW10" -DestinationFolder "Windows 10"
 $OSGUID10 = (Get-ItemProperty "DS001:\Operating Systems\Windows 10 Pro in Windows 10 install.wim").guid
 Import-MDTOperatingSystem -Path "DS001:\Operating Systems" -SourcePath "$DriveW11" -DestinationFolder "Windows 11"
@@ -242,29 +242,28 @@ Write-Verbose "Creating Task Sequences" -Verbose
 Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 10 - Client Rollout" -Template "Client.xml" -Comments "" -ID "Win10" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows 10 Pro in Windows 10 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
 Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 11 - Client Rollout" -Template "Client.xml" -Comments "" -ID "Win11" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows 11 Pro in Windows 11 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
 Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "User State -Backup USMT" -Template "ClientReplace.xml" -Comments "" -ID "USMT" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows 11 Pro in Windows 11 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Standard" -Template "Server.xml" -Comments "" -ID "CTS-001" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Parallels RAS" -Template "Server.xml" -Comments "" -ID "CTS-002" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Parallels RDSH" -Template "Server.xml" -Comments "" -ID "CTS-003" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Domain Controller" -Template "Server.xml" -Comments "" -ID "CTS-004" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Citrix XenApp DDC SF DIR LIC" -Template "Server.xml" -Comments "" -ID "CTS-005" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Citrix Provisioning Services" -Template "Server.xml" -Comments "" -ID "CTS-006" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Standard with SQL Server" -Template "Server.xml" -Comments "" -ID "CTS-007" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Citrix XenApp VDA PVS" -Template "Server.xml" -Comments "" -ID "CTS-008" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Citrix XenApp VDA MCS" -Template "Server.xml" -Comments "" -ID "CTS-009" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - VMware Horizon Connection Server" -Template "Server.xml" -Comments "" -ID "CTS-010" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - VMware Horizon RDSH" -Template "Server.xml" -Comments "" -ID "CTS-011" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Citrix Receiver, VMware Horizon and Parallels Client" -Template "Server.xml" -Comments "" -ID "CTS-012" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Microsoft RDSH" -Template "Server.xml" -Comments "" -ID "CTS-013" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Automation Framework" -Template "Server.xml" -Comments "" -ID "CTS-014" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Additional Domain Controller" -Template "Server.xml" -Comments "" -ID "CTS-015" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
-Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2019 x64 - Certification Authority" -Template "Server.xml" -Comments "" -ID "CTS-016" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Standard" -Template "Server.xml" -Comments "" -ID "CTS-001" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Parallels RAS" -Template "Server.xml" -Comments "" -ID "CTS-002" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Parallels RDSH" -Template "Server.xml" -Comments "" -ID "CTS-003" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Domain Controller" -Template "Server.xml" -Comments "" -ID "CTS-004" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Citrix XenApp DDC SF DIR LIC" -Template "Server.xml" -Comments "" -ID "CTS-005" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Citrix Provisioning Services" -Template "Server.xml" -Comments "" -ID "CTS-006" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Standard with SQL Server" -Template "Server.xml" -Comments "" -ID "CTS-007" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Citrix XenApp VDA PVS" -Template "Server.xml" -Comments "" -ID "CTS-008" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Citrix XenApp VDA MCS" -Template "Server.xml" -Comments "" -ID "CTS-009" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - VMware Horizon Connection Server" -Template "Server.xml" -Comments "" -ID "CTS-010" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - VMware Horizon RDSH" -Template "Server.xml" -Comments "" -ID "CTS-011" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Citrix Receiver, VMware Horizon and Parallels Client" -Template "Server.xml" -Comments "" -ID "CTS-012" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Microsoft RDSH" -Template "Server.xml" -Comments "" -ID "CTS-013" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Automation Framework" -Template "Server.xml" -Comments "" -ID "CTS-014" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Additional Domain Controller" -Template "Server.xml" -Comments "" -ID "CTS-015" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
+Import-MDTTaskSequence -Path "DS001:\Task Sequences" -Name "Windows 2022 x64 - Certification Authority" -Template "Server.xml" -Comments "" -ID "CTS-016" -Version "1.0" -OperatingSystemPath "DS001:\Operating Systems\Windows Server 2019 SERVERSTANDARD in Windows 2019 X64 install.wim" -FullName "xenappblog" -OrgName "xenappblog" -HomePage "https://xenappblog.com/blog" -Verbose
 import-mdttasksequence -path "DS001:\Task Sequences" -Name "Cloud - Domain Controller" -Template "StateRestore.xml" -Comments "" -ID "CTX-015" -Version "1.0" -Verbose
 import-mdttasksequence -path "DS001:\Task Sequences" -Name "Cloud - Automation Framework" -Template "StateRestore.xml" -Comments "" -ID "CTX-016" -Version "1.0" -Verbose
-import-mdttasksequence -path "DS001:\Task Sequences" -Name "Cloud - Automation Framework" -Template "StateRestore.xml" -Comments "" -ID "CTX-016" -Version "1.0" -Verbose
 
 
-new-item -path "DS001:\Packages" -enable "True" -Name "Windows 2019 x64" -Comments "" -ItemType "folder" -Verbose
-new-item -path "DS001:\Selection Profiles" -enable "True" -Name "Windows 2019 x64" -Comments "" -Definition "<SelectionProfile><Include path=`"Packages\Windows 2019 x64`" /></SelectionProfile>" -ReadOnly "False" -Verbose
+new-item -path "DS001:\Packages" -enable "True" -Name "Windows 2022 x64" -Comments "" -ItemType "folder" -Verbose
+new-item -path "DS001:\Selection Profiles" -enable "True" -Name "Windows 2022 x64" -Comments "" -Definition "<SelectionProfile><Include path=`"Packages\Windows 2019 x64`" /></SelectionProfile>" -ReadOnly "False" -Verbose
 new-item -path "DS001:\Applications" -enable "True" -Name "Adobe" -Comments "" -ItemType "folder" -Verbose
 new-item -path "DS001:\Applications" -enable "True" -Name "Bundles" -Comments "" -ItemType "folder" -Verbose
 new-item -path "DS001:\Applications" -enable "True" -Name "Citrix" -Comments "" -ItemType "folder" -Verbose
@@ -351,6 +350,8 @@ Expand-Archive -Path $PackageName -DestinationPath .\ -Force
 copy-item $Source\Templates\* "C:\Program Files\Microsoft Deployment Toolkit\Templates" -Force
 copy-item $Source\Samples\* "C:\Program Files\Microsoft Deployment Toolkit\Samples" -Force
 
+# Invoke-WebRequest -UseBasicParsing -Uri "http://xenapptraining.s3.amazonaws.com/Background.bmp" -OutFile "C:\Program Files\Microsoft Deployment Toolkit\Samples\Background.bmp"
+
 Write-Verbose "Downloading EverGreen Applications from Github" -Verbose
 $uri = "https://github.com/haavarstein/Applications/archive/master.zip"
 $PackageName = "Applications-master.zip"
@@ -414,9 +415,9 @@ Add-Content $File "_SMSTSOrgName=oneICT Rollout"
 Add-Content $File "' DoNotCreateExtraPartition=YES"
 Add-Content $File ""
 Add-Content $File "SkipDomainMemberShip=NO"
-Add-Content $File "JoinDomain=customer.local"
+Add-Content $File "JoinDomain=mylab.com"
 Add-Content $File "DomainAdmin=Administrator"
-Add-Content $File "DomainAdminDomain=customer.local"
+Add-Content $File "DomainAdminDomain=mylab.com"
 Add-Content $File "DomainAdminPassword=P@ssw0rd"
 Add-Content $File ""
 Add-Content $File "SkipTimeZone=YES"
